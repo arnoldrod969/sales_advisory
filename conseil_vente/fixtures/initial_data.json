@@ -1,0 +1,160 @@
+[
+  {
+    "model": "conseil_vente.classesociale",
+    "pk": 1,
+    "fields": {
+      "libelle": "Économique",
+      "description": "Produits accessibles, rapport qualité-prix optimal",
+      "ordre": 1
+    }
+  },
+  {
+    "model": "conseil_vente.classesociale",
+    "pk": 2,
+    "fields": {
+      "libelle": "Milieu de gamme",
+      "description": "Produits de qualité à prix intermédiaire",
+      "ordre": 2
+    }
+  },
+  {
+    "model": "conseil_vente.classesociale",
+    "pk": 3,
+    "fields": {
+      "libelle": "Premium",
+      "description": "Produits haut de gamme, marques reconnues",
+      "ordre": 3
+    }
+  },
+  {
+    "model": "conseil_vente.classesociale",
+    "pk": 4,
+    "fields": {
+      "libelle": "Luxe",
+      "description": "Produits d'exception, gamme prestige",
+      "ordre": 4
+    }
+  },
+
+  {
+    "model": "conseil_vente.problematique",
+    "pk": 1,
+    "fields": {
+      "libelle": "Peau grasse",
+      "description": "Peau brillante, pores dilatés, excès de sébum",
+      "icone": "🌿",
+      "ordre": 1
+    }
+  },
+  {
+    "model": "conseil_vente.problematique",
+    "pk": 2,
+    "fields": {
+      "libelle": "Peau sèche",
+      "description": "Peau tiraillée, manque d'hydratation, squames",
+      "icone": "💧",
+      "ordre": 2
+    }
+  },
+  {
+    "model": "conseil_vente.problematique",
+    "pk": 3,
+    "fields": {
+      "libelle": "Teint terne",
+      "description": "Manque d'éclat, teint fatigué, sans luminosité",
+      "icone": "✨",
+      "ordre": 3
+    }
+  },
+  {
+    "model": "conseil_vente.problematique",
+    "pk": 4,
+    "fields": {
+      "libelle": "Taches & hyperpigmentation",
+      "description": "Taches brunes, taches solaires, inégalités de teint",
+      "icone": "☀️",
+      "ordre": 4
+    }
+  },
+  {
+    "model": "conseil_vente.problematique",
+    "pk": 5,
+    "fields": {
+      "libelle": "Anti-âge",
+      "description": "Rides, ridules, perte de fermeté et d'élasticité",
+      "icone": "🕊️",
+      "ordre": 5
+    }
+  },
+  {
+    "model": "conseil_vente.problematique",
+    "pk": 6,
+    "fields": {
+      "libelle": "Acné & imperfections",
+      "description": "Boutons, points noirs, peau à tendance acnéique",
+      "icone": "🔬",
+      "ordre": 6
+    }
+  },
+  {
+    "model": "conseil_vente.problematique",
+    "pk": 7,
+    "fields": {
+      "libelle": "Cheveux secs & abîmés",
+      "description": "Cheveux cassants, sans brillance, pointes sèches",
+      "icone": "🌸",
+      "ordre": 7
+    }
+  },
+  {
+    "model": "conseil_vente.problematique",
+    "pk": 8,
+    "fields": {
+      "libelle": "Cheveux gras",
+      "description": "Racines grasses, cuir chevelu irrité",
+      "icone": "🍃",
+      "ordre": 8
+    }
+  },
+  {
+    "model": "conseil_vente.problematique",
+    "pk": 9,
+    "fields": {
+      "libelle": "Corps & éclat",
+      "description": "Hydratation corps, éclat de la peau, soin global",
+      "icone": "💎",
+      "ordre": 9
+    }
+  },
+  {
+    "model": "conseil_vente.problematique",
+    "pk": 10,
+    "fields": {
+      "libelle": "Parfum & déodorant",
+      "description": "Recherche d'un parfum ou déodorant adapté",
+      "icone": "🌺",
+      "ordre": 10
+    }
+  },
+
+  {
+    "model": "conseil_vente.pointdevente",
+    "pk": 1,
+    "fields": {
+      "nom": "JD Original — Mokolo",
+      "ville": "Yaoundé",
+      "adresse": "Marché de Mokolo, Yaoundé",
+      "actif": true
+    }
+  },
+  {
+    "model": "conseil_vente.pointdevente",
+    "pk": 2,
+    "fields": {
+      "nom": "JD Original — Siège",
+      "ville": "Yaoundé",
+      "adresse": "Siège JD Cosmetics, Yaoundé",
+      "actif": true
+    }
+  }
+]

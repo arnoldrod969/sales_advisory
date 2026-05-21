@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JD Original - Aucune affectation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --or: #C9A84C;
+      --encre: #1A1A2E;
+      --gris: #6B6B7B;
+      --blanc: #FAFAF8;
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --sans: 'DM Sans', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; font-family: var(--sans); background: var(--encre);
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .card {
+      background: var(--blanc); border-radius: 20px; padding: 40px 36px;
+      width: 100%; max-width: 460px; box-shadow: 0 24px 64px rgba(0,0,0,.4);
+      text-align: center;
+    }
+    .logo {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--or), #e8c56a);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--serif); font-size: 18px; color: var(--encre);
+      margin: 0 auto 20px;
+    }
+    h1 {
+      font-family: var(--serif); font-size: 30px; font-weight: 300;
+      color: var(--encre); margin-bottom: 10px;
+    }
+    .sub {
+      font-size: 12px; color: var(--gris); text-transform: uppercase;
+      letter-spacing: .08em; margin-bottom: 22px;
+    }
+    .message {
+      font-size: 15px; color: var(--encre); line-height: 1.7; margin-bottom: 24px;
+    }
+    .btn {
+      width: 100%; padding: 12px; background: var(--encre); color: var(--or);
+      border: none; border-radius: 10px; font-family: var(--sans);
+      font-size: 14px; font-weight: 500; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">JD</div>
+    <h1>Aucune affectation</h1>
+    <div class="sub">Conseil beauté</div>
+    <div class="message">
+      Votre compte n'est pas encore affecté à un point de vente.
+      Contactez votre administrateur.
+    </div>
+
+    <form method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn">Se déconnecter</button>
+    </form>
+  </div>
+</body>
+</html>

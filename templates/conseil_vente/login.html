@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JD Original — Connexion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --or: #C9A84C; --encre: #1A1A2E;
+      --gris: #6B6B7B; --blanc: #FAFAF8;
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --sans:  'DM Sans', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; font-family: var(--sans);
+      background: var(--encre);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: var(--blanc); border-radius: 20px;
+      padding: 40px 36px; width: 100%; max-width: 380px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.4);
+    }
+    .logo {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--or), #e8c56a);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--serif); font-size: 18px; color: var(--encre);
+      margin: 0 auto 20px;
+    }
+    h1 {
+      font-family: var(--serif); font-size: 28px; font-weight: 300;
+      color: var(--encre); text-align: center; margin-bottom: 4px;
+    }
+    .sub {
+      font-size: 12px; color: var(--gris); text-align: center;
+      margin-bottom: 32px; text-transform: uppercase; letter-spacing: .08em;
+    }
+    .field { margin-bottom: 16px; }
+    label { display: block; font-size: 12px; color: var(--gris); margin-bottom: 6px; font-weight: 500; }
+    input {
+      width: 100%; padding: 11px 14px;
+      border: 1.5px solid rgba(0,0,0,.12); border-radius: 10px;
+      font-family: var(--sans); font-size: 14px; color: var(--encre);
+      background: #fff; transition: border-color .2s;
+      outline: none;
+    }
+    input:focus { border-color: var(--or); }
+    .btn {
+      width: 100%; padding: 12px;
+      background: var(--encre); color: var(--or);
+      border: none; border-radius: 10px;
+      font-family: var(--sans); font-size: 14px; font-weight: 500;
+      cursor: pointer; margin-top: 8px;
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: .88; }
+    .error {
+      background: #f8d7da; color: #721c24;
+      padding: 10px 14px; border-radius: 8px;
+      font-size: 13px; margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">JD</div>
+    <h1>JD Original</h1>
+    <div class="sub">Conseil beauté · Connexion</div>
+
+    {% if form.errors %}
+    <div class="error">Identifiants incorrects. Veuillez réessayer.</div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="field">
+        <label for="id_username">Identifiant</label>
+        <input type="text" name="username" id="id_username" autocomplete="username" autofocus>
+      </div>
+      <div class="field">
+        <label for="id_password">Mot de passe</label>
+        <input type="password" name="password" id="id_password" autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn">Se connecter</button>
+      <input type="hidden" name="next" value="{{ next }}">
+    </form>
+  </div>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JD Original - Choisir un point de vente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --or: #C9A84C;
+      --encre: #1A1A2E;
+      --gris: #6B6B7B;
+      --blanc: #FAFAF8;
+      --shadow: 0 24px 64px rgba(0,0,0,.25);
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --sans: 'DM Sans', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      font-family: var(--sans);
+      background: var(--encre);
+      color: var(--encre);
+      padding: 24px;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    .hero { text-align: center; color: var(--blanc); margin-bottom: 28px; }
+    .logo {
+      width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--or), #e8c56a);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--serif); font-size: 20px; color: var(--encre);
+    }
+    h1 {
+      font-family: var(--serif); font-size: 34px; font-weight: 300;
+      margin-bottom: 6px;
+    }
+    .sub {
+      font-size: 12px; color: rgba(255,255,255,.70);
+      letter-spacing: .08em; text-transform: uppercase;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .card-form { display: block; }
+    .card-btn {
+      width: 100%; border: 0; border-radius: 20px; background: var(--blanc);
+      box-shadow: var(--shadow); padding: 22px 20px; text-align: left;
+      cursor: pointer; transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .card-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 28px 72px rgba(0,0,0,.32);
+    }
+    .card-btn.current {
+      outline: 2px solid var(--or);
+      background: #fffdf7;
+    }
+    .tag {
+      display: inline-block; font-size: 11px; color: #7a5c1a;
+      background: #f5edd6; border-radius: 999px; padding: 4px 10px;
+      margin-bottom: 14px;
+    }
+    .nom {
+      font-family: var(--serif); font-size: 28px; font-weight: 400;
+      margin-bottom: 6px; color: var(--encre);
+    }
+    .ville { font-size: 14px; color: var(--gris); margin-bottom: 12px; }
+    .adresse { font-size: 13px; color: var(--gris); line-height: 1.5; min-height: 40px; }
+    .footer {
+      margin-top: 24px; text-align: center;
+      color: rgba(255,255,255,.72); font-size: 13px;
+    }
+    .footer a { color: var(--or); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div class="logo">JD</div>
+      <h1>Choisir un point de vente</h1>
+      <div class="sub">Session administrateur</div>
+    </div>
+
+    <div class="grid">
+      {% for pdv in points_de_vente %}
+      <form method="post" class="card-form">
+        {% csrf_token %}
+        <input type="hidden" name="point_de_vente_id" value="{{ pdv.id }}">
+        <button type="submit" class="card-btn{% if pdv.id == pdv_actuel_id %} current{% endif %}">
+          {% if pdv.id == pdv_actuel_id %}
+          <div class="tag">PDV actuellement sélectionné</div>
+          {% endif %}
+          <div class="nom">{{ pdv.nom }}</div>
+          <div class="ville">{{ pdv.ville }}</div>
+          <div class="adresse">
+            {% if pdv.adresse %}
+              {{ pdv.adresse }}
+            {% else %}
+              Adresse non renseignée
+            {% endif %}
+          </div>
+        </button>
+      </form>
+      {% empty %}
+      <div class="card-btn">
+        <div class="nom">Aucun point de vente actif</div>
+        <div class="ville">Ajoutez ou réactivez un point de vente dans l'administration.</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="footer">
+      Connecté en tant que {{ request.user.username }} ·
+      <a href="{% url 'conseil_vente:interface' %}">Retour à l'interface</a>
+    </div>
+  </div>
+</body>
+</html>

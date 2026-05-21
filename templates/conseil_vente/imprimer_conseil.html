@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bon de commande - Conseil {{ conseil.id }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --or: #C9A84C;
+      --encre: #1A1A2E;
+      --gris: #667085;
+      --gris-l: #EAECF0;
+      --blanc: #FFFFFF;
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --sans: 'DM Sans', sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #f6f6f3;
+      color: var(--encre);
+      font-family: var(--sans);
+      padding: 24px;
+    }
+    .sheet {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      background: var(--blanc);
+      padding: 18mm 16mm;
+      box-shadow: 0 10px 30px rgba(0,0,0,.08);
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      border-bottom: 2px solid var(--gris-l);
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--or), #e8c56a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--serif);
+      font-size: 20px;
+      color: var(--encre);
+    }
+    .brand-title {
+      font-family: var(--serif);
+      font-size: 30px;
+      line-height: 1;
+      margin-bottom: 3px;
+    }
+    .brand-sub {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--gris);
+    }
+    .doc-meta {
+      text-align: right;
+    }
+    .doc-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--gris);
+      margin-bottom: 6px;
+    }
+    .doc-number {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .doc-date {
+      font-size: 13px;
+      color: var(--gris);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+    .card {
+      border: 1px solid var(--gris-l);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .card-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--gris);
+      margin-bottom: 8px;
+    }
+    .card-value {
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .section-title {
+      font-family: var(--serif);
+      font-size: 28px;
+      margin: 10px 0 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+    }
+    thead th {
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--gris);
+      border-bottom: 1px solid var(--gris-l);
+      padding: 10px 8px;
+    }
+    tbody td {
+      padding: 12px 8px;
+      border-bottom: 1px solid #f0f2f5;
+      vertical-align: top;
+      font-size: 14px;
+    }
+    .ref {
+      font-size: 12px;
+      font-weight: 700;
+      color: #7a5c1a;
+      background: #f8f2df;
+      display: inline-flex;
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+    .price, .total {
+      text-align: right;
+      white-space: nowrap;
+    }
+    .total-box {
+      margin-left: auto;
+      width: 280px;
+      border: 1px solid var(--gris-l);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 15px;
+      margin-bottom: 10px;
+    }
+    .total-row:last-child {
+      margin-bottom: 0;
+      padding-top: 10px;
+      border-top: 1px solid var(--gris-l);
+      font-weight: 700;
+      font-size: 18px;
+    }
+    .footer-note {
+      margin-top: 30px;
+      padding-top: 14px;
+      border-top: 1px solid var(--gris-l);
+      color: var(--gris);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .print-actions {
+      width: 210mm;
+      margin: 0 auto 16px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .print-btn {
+      border: none;
+      border-radius: 10px;
+      padding: 11px 16px;
+      cursor: pointer;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .print-btn.primary {
+      background: var(--encre);
+      color: var(--or);
+    }
+    .print-btn.secondary {
+      background: #fff;
+      border: 1px solid var(--gris-l);
+      color: var(--encre);
+    }
+    @page {
+      size: A4;
+      margin: 10mm;
+    }
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+      .print-actions {
+        display: none;
+      }
+      .sheet {
+        width: auto;
+        min-height: auto;
+        margin: 0;
+        box-shadow: none;
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-actions">
+    <button class="print-btn secondary" type="button" onclick="window.close()">Fermer</button>
+    <button class="print-btn primary" type="button" onclick="window.print()">Imprimer</button>
+  </div>
+
+  <div class="sheet">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">JD</div>
+        <div>
+          <div class="brand-title">JD Original</div>
+          <div class="brand-sub">Bon de commande conseil</div>
+        </div>
+      </div>
+      <div class="doc-meta">
+        <div class="doc-title">Référence document</div>
+        <div class="doc-number">BC-{{ conseil.id|stringformat:"05d" }}</div>
+        <div class="doc-date">{{ conseil.date_conseil|date:"d/m/Y H:i" }}</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-label">Point de vente</div>
+        <div class="card-value">
+          <strong>{{ conseil.point_de_vente.nom }}</strong><br>
+          {{ conseil.point_de_vente.ville }}<br>
+          {{ conseil.point_de_vente.adresse|default:"Adresse non renseignée" }}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Contexte du conseil</div>
+        <div class="card-value">
+          <strong>Problématique :</strong> {{ conseil.problematique|default:"—" }}<br>
+          <strong>Classe sociale :</strong> {{ conseil.classe_sociale|default:"—" }}<br>
+          <strong>Vendeur :</strong> {{ conseil.compte_generique|default:request.user.username }}
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Articles recommandés</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 22%;">Référence</th>
+          <th>Désignation</th>
+          <th style="width: 20%;" class="price">Prix</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for article in articles %}
+          <tr>
+            <td><span class="ref">{{ article.ref_nirgescom }}</span></td>
+            <td>{{ article.designation }}</td>
+            <td class="price">{{ article.prix_detail|floatformat:0 }} FCFA</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="total-box">
+      <div class="total-row">
+        <span>Nombre d'articles</span>
+        <span>{{ articles|length }}</span>
+      </div>
+      <div class="total-row">
+        <span>Total estimé</span>
+        <span>{{ total }} FCFA</span>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      Document généré depuis l'outil interne de conseil à la vente JD Conseil Vente.<br>
+      Ce bon peut être utilisé comme support d'impression pour préparer une commande client en point de vente.
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => window.print(), 250);
+    });
+  </script>
+</body>
+</html>

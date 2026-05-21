@@ -1,0 +1,83 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Importer le catalogue Nirgescom{% endblock %}
+
+{% block content %}
+<div style="max-width:640px">
+
+  <h1 style="margin-bottom:8px">Importer le catalogue Nirgescom</h1>
+  <p style="color:#6c757d;margin-bottom:24px">
+    Importez un fichier XLS exporté depuis Nirgescom.
+    Les articles existants seront mis à jour, les nouveaux seront créés.
+  </p>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div style="padding:12px 16px;border-radius:6px;margin-bottom:16px;
+        background:{% if message.tags == 'success' %}#d4edda{% elif message.tags == 'error' %}#f8d7da{% else %}#fff3cd{% endif %};
+        color:{% if message.tags == 'success' %}#155724{% elif message.tags == 'error' %}#721c24{% else %}#856404{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:20px;margin-bottom:16px">
+      <h3 style="margin:0 0 4px;font-size:15px">Fichier catalogue (obligatoire)</h3>
+      <p style="color:#6c757d;font-size:13px;margin:0 0 12px">
+        Export XLS Nirgescom — colonnes attendues : Code, Designation, Achat, Detail, Revient, image
+      </p>
+      <input type="file" name="fichier_xls" accept=".xls,.xlsx" required
+        style="display:block;width:100%;padding:8px;border:1px solid #ced4da;border-radius:4px;background:#fff">
+    </div>
+
+    <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:20px;margin-bottom:16px">
+      <h3 style="margin:0 0 4px;font-size:15px">Fichier sous-familles (optionnel)</h3>
+      <p style="color:#6c757d;font-size:13px;margin:0 0 12px">
+        CSV Nirgescom des sous-familles. Si non fourni, les sous-familles déjà en base seront utilisées.
+      </p>
+      <input type="file" name="fichier_sf" accept=".csv"
+        style="display:block;width:100%;padding:8px;border:1px solid #ced4da;border-radius:4px;background:#fff">
+    </div>
+
+    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:16px;margin-bottom:24px">
+      <p style="margin:0;font-size:13px;color:#856404">
+        <strong>Répertoire images configuré :</strong><br>
+        <code style="font-size:12px">{{ nirgescom_dir }}</code><br>
+        <span style="font-size:12px">
+          Pour changer ce chemin, modifiez <code>NIRGESCOM_IMAGES_DIR</code> dans <code>settings.py</code>.
+        </span>
+      </p>
+    </div>
+
+    <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:20px;margin-bottom:24px">
+      <h3 style="margin:0 0 4px;font-size:15px">Répertoire images alternatif (optionnel)</h3>
+      <p style="color:#6c757d;font-size:13px;margin:0 0 12px">
+        Si vos images sont dans un autre dossier que celui configuré, indiquez ici le chemin complet.
+        Exemple : <code>D:\\Images\\JD\\nirgescom</code>
+      </p>
+      <input type="text" name="repertoire_images_override" value="{{ repertoire_images_override }}"
+        placeholder="Laisser vide pour utiliser le répertoire configuré"
+        style="display:block;width:100%;padding:10px;border:1px solid #ced4da;border-radius:4px;background:#fff">
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <button type="submit"
+        style="padding:10px 24px;background:#417690;color:#fff;border:none;
+               border-radius:4px;font-size:14px;cursor:pointer;font-weight:500">
+        ▶ Lancer l'import
+      </button>
+      <a href="{% url 'admin:conseil_vente_importcatalogue_changelist' %}"
+        style="padding:10px 20px;background:#fff;color:#417690;border:1px solid #dee2e6;
+               border-radius:4px;font-size:14px;text-decoration:none;display:inline-flex;align-items:center">
+        Annuler
+      </a>
+    </div>
+
+  </form>
+
+</div>
+{% endblock %}

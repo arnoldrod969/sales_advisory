@@ -1,0 +1,507 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    .jd-toolbar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+      padding: 20px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+    }
+    .jd-field label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .jd-field select,
+    .jd-field input {
+      width: 100%;
+      min-height: 50px;
+      padding: 12px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.4;
+      background: #fff;
+      color: #0f172a;
+      box-sizing: border-box;
+      vertical-align: middle;
+    }
+    .jd-field select {
+      appearance: auto;
+      font-weight: 600;
+    }
+    .jd-field select:focus,
+    .jd-field input:focus {
+      outline: 0;
+      border-color: #417690;
+      box-shadow: 0 0 0 3px rgba(65, 118, 144, .15);
+    }
+    .jd-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 12px;
+    }
+    .jd-summary {
+      margin-bottom: 20px;
+      padding: 16px 18px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+    }
+    .jd-summary strong {
+      color: #0f172a;
+    }
+    .jd-filterbar {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr 1fr .8fr .8fr 1fr auto;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding: 18px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+    }
+    .jd-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      padding-top: 28px;
+    }
+    .jd-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+    .jd-card {
+      position: relative;
+      background: #fff;
+      border: 1px solid #dbe2ea;
+      border-radius: 14px;
+      overflow: hidden;
+      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    }
+    .jd-card:hover {
+      border-color: #417690;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, .08);
+      transform: translateY(-1px);
+    }
+    .jd-card input[type="checkbox"] {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      width: 20px;
+      height: 20px;
+      z-index: 2;
+      accent-color: #1d4ed8;
+    }
+    .jd-card label {
+      display: block;
+      cursor: pointer;
+      padding: 12px;
+    }
+    .jd-card.selected {
+      border-color: #1d4ed8;
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, .18), 0 10px 24px rgba(29, 78, 216, .10);
+      background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+    }
+    .jd-card.selected::after {
+      content: 'Sélectionné';
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 2;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #1d4ed8;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+    .jd-image {
+      height: 170px;
+      background: #f8fafc;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      color: #64748b;
+      font-size: 13px;
+    }
+    .jd-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .jd-card.hide-images .jd-image {
+      display: none;
+    }
+    .jd-meta {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+    .jd-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: #0f172a;
+      line-height: 1.35;
+      margin-bottom: 8px;
+      padding-left: 34px;
+    }
+    .jd-price {
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+    .jd-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .jd-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: #eef2f7;
+      color: #475569;
+    }
+    .jd-empty {
+      padding: 28px;
+      text-align: center;
+      color: #64748b;
+      background: #fff;
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+    }
+    .jd-footerbar {
+      position: sticky;
+      bottom: 0;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 16px;
+      background: rgba(255,255,255,.96);
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+    }
+    .jd-count {
+      font-weight: 700;
+      color: #0f172a;
+    }
+    @media (max-width: 900px) {
+      .jd-filterbar {
+        grid-template-columns: 1fr;
+      }
+      .jd-toggle {
+        padding-top: 0;
+      }
+      .jd-footerbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+
+  <form method="get" class="jd-toolbar">
+    <div class="jd-field">
+      <label for="id_problematique_id">Problématique</label>
+      <select name="problematique_id" id="id_problematique_id" required>
+        <option value="">Choisir…</option>
+        {% for pb in problematiques %}
+          <option value="{{ pb.id }}"{% if problematique_id == pb.id|stringformat:'s' %} selected{% endif %}>{{ pb.libelle }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="jd-field">
+      <label for="id_classe_sociale_id">Classe sociale</label>
+      <select name="classe_sociale_id" id="id_classe_sociale_id" required>
+        <option value="">Choisir…</option>
+        {% for cs in classes_sociales %}
+          <option value="{{ cs.id }}"{% if classe_sociale_id == cs.id|stringformat:'s' %} selected{% endif %}>{{ cs.libelle }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="jd-actions">
+      <button type="submit" class="default">Charger les produits</button>
+      <a href="{% url 'admin:conseil_vente_recommandation_changelist' %}" class="button">Retour à la liste</a>
+    </div>
+  </form>
+
+  {% if resume_selection.problematique and resume_selection.classe_sociale %}
+    <div class="jd-summary">
+      <strong>Combinaison active :</strong>
+      {{ resume_selection.problematique.libelle }} × {{ resume_selection.classe_sociale.libelle }}
+      <br>
+      <span>{{ recommandations_existantes|length }} recommandation(s) déjà enregistrée(s).</span>
+      <br>
+      <span>L'enregistrement remplace la sélection actuelle pour cette combinaison.</span>
+    </div>
+
+    <form method="post" id="bulk-recommandation-form">
+      {% csrf_token %}
+      <input type="hidden" name="problematique_id" value="{{ problematique_id }}">
+      <input type="hidden" name="classe_sociale_id" value="{{ classe_sociale_id }}">
+
+      <div class="jd-filterbar">
+        <div class="jd-field">
+          <label for="id_recherche">Recherche produit</label>
+          <input type="text" id="id_recherche" placeholder="Désignation, référence, sous-famille...">
+        </div>
+        <div class="jd-field">
+          <label for="id_famille_filtre">Famille</label>
+          <select id="id_famille_filtre">
+            <option value="">Toutes</option>
+            {% for famille in familles %}
+              <option value="{{ famille.id }}">{{ famille.code }} - {{ famille.nom }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="jd-field">
+          <label for="id_sous_famille_filtre">Sous-famille</label>
+          <select id="id_sous_famille_filtre">
+            <option value="">Toutes</option>
+            {% for sous_famille in sous_familles %}
+              <option value="{{ sous_famille.id }}" data-famille="{{ sous_famille.famille_id }}">{{ sous_famille.code }} - {{ sous_famille.nom }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="jd-field">
+          <label for="id_prix_min">Prix min</label>
+          <input type="number" id="id_prix_min" min="0" step="1" placeholder="0">
+        </div>
+        <div class="jd-field">
+          <label for="id_prix_max">Prix max</label>
+          <input type="number" id="id_prix_max" min="0" step="1" placeholder="Sans limite">
+        </div>
+        <div class="jd-field">
+          <label for="id_tri">Tri</label>
+          <select id="id_tri">
+            <option value="default">Ordre actuel</option>
+            <option value="name_asc">Nom A-Z</option>
+            <option value="name_desc">Nom Z-A</option>
+            <option value="price_asc">Prix croissant</option>
+            <option value="price_desc">Prix décroissant</option>
+            <option value="ref_asc">Référence article</option>
+          </select>
+        </div>
+        <label class="jd-toggle" for="id_afficher_images">
+          <input type="checkbox" id="id_afficher_images" checked>
+          Afficher les images
+        </label>
+      </div>
+
+      {% if articles %}
+        <div class="jd-grid" id="articles-grid">
+          {% for article in articles %}
+            <div
+              class="jd-card{% if article.selectionne %} selected{% endif %}"
+              data-family="{{ article.famille_id }}"
+              data-subfamily="{{ article.sous_famille_id }}"
+              data-search="{{ article.designation|lower }} {{ article.ref_nirgescom|lower }} {{ article.famille_nom|lower }} {{ article.sous_famille_nom|lower }}"
+              data-price="{{ article.prix_detail|cut:' ' }}"
+              data-name="{{ article.designation|lower }}"
+              data-ref="{{ article.ref_nirgescom|lower }}"
+            >
+              <label>
+                <input type="checkbox" name="article_ids" value="{{ article.id }}"{% if article.selectionne %} checked{% endif %}>
+                <div class="jd-image">
+                  {% if article.image_url %}
+                    <img src="{{ article.image_url }}" alt="{{ article.designation }}">
+                  {% else %}
+                    <span>Aucune image</span>
+                  {% endif %}
+                </div>
+                <div class="jd-meta">{{ article.ref_nirgescom }}</div>
+                <div class="jd-title">{{ article.designation }}</div>
+                <div class="jd-price">{{ article.prix_detail }} FCFA</div>
+                <div class="jd-badges">
+                  <span class="jd-badge">{{ article.famille_nom }}</span>
+                  <span class="jd-badge">{{ article.sous_famille_nom }}</span>
+                </div>
+              </label>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="jd-empty" id="articles-empty" style="display:none;">
+          Aucun produit ne correspond aux filtres courants.
+        </div>
+
+        <div class="jd-footerbar">
+          <div class="jd-count"><span id="selection-count">0</span> produit(s) sélectionné(s)</div>
+          <div class="jd-actions">
+            <button type="button" class="button" id="select-visible">Sélectionner les visibles</button>
+            <button type="button" class="button" id="clear-visible">Désélectionner les visibles</button>
+            <button type="submit" class="default">Enregistrer la sélection</button>
+          </div>
+        </div>
+      {% else %}
+        <div class="jd-empty">
+          Aucun article actif disponible pour le moment.
+        </div>
+      {% endif %}
+    </form>
+  {% else %}
+    <div class="jd-empty">
+      Choisissez d'abord une problématique et une classe sociale pour afficher la grille de produits.
+    </div>
+  {% endif %}
+
+  <script>
+    (function() {
+      const grid = document.getElementById('articles-grid');
+      if (!grid) {
+        return;
+      }
+
+      const cards = Array.from(grid.querySelectorAll('.jd-card'));
+      const searchInput = document.getElementById('id_recherche');
+      const familyFilter = document.getElementById('id_famille_filtre');
+      const subfamilyFilter = document.getElementById('id_sous_famille_filtre');
+      const prixMinInput = document.getElementById('id_prix_min');
+      const prixMaxInput = document.getElementById('id_prix_max');
+      const triSelect = document.getElementById('id_tri');
+      const showImages = document.getElementById('id_afficher_images');
+      const emptyState = document.getElementById('articles-empty');
+      const selectionCount = document.getElementById('selection-count');
+      const selectVisibleBtn = document.getElementById('select-visible');
+      const clearVisibleBtn = document.getElementById('clear-visible');
+      const subfamilyOptions = Array.from(subfamilyFilter.options);
+
+      function syncCardSelection(card) {
+        const checkbox = card.querySelector('input[type="checkbox"]');
+        card.classList.toggle('selected', checkbox.checked);
+      }
+
+      function updateSelectionCount() {
+        selectionCount.textContent = grid.querySelectorAll('input[type="checkbox"]:checked').length;
+      }
+
+      function updateSubfamilyOptions() {
+        const familyValue = familyFilter.value;
+        subfamilyOptions.forEach((option, index) => {
+          if (index === 0) {
+            option.hidden = false;
+            return;
+          }
+          option.hidden = !!familyValue && option.dataset.famille !== familyValue;
+        });
+
+        const currentOption = subfamilyFilter.selectedOptions[0];
+        if (currentOption && currentOption.hidden) {
+          subfamilyFilter.value = '';
+        }
+      }
+
+      function applyFilters() {
+        const query = searchInput.value.trim().toLowerCase();
+        const familyValue = familyFilter.value;
+        const subfamilyValue = subfamilyFilter.value;
+        const prixMin = Number(prixMinInput.value || 0);
+        const prixMaxRaw = prixMaxInput.value;
+        const prixMax = prixMaxRaw ? Number(prixMaxRaw) : null;
+        const tri = triSelect.value;
+        let visibleCount = 0;
+
+        const comparators = {
+          name_asc: (a, b) => a.dataset.name.localeCompare(b.dataset.name, 'fr'),
+          name_desc: (a, b) => b.dataset.name.localeCompare(a.dataset.name, 'fr'),
+          price_asc: (a, b) => Number(a.dataset.price) - Number(b.dataset.price),
+          price_desc: (a, b) => Number(b.dataset.price) - Number(a.dataset.price),
+          ref_asc: (a, b) => a.dataset.ref.localeCompare(b.dataset.ref, 'fr'),
+        };
+
+        if (comparators[tri]) {
+          cards.sort(comparators[tri]);
+          cards.forEach((card) => grid.appendChild(card));
+        }
+
+        cards.forEach((card) => {
+          const matchesQuery = !query || card.dataset.search.includes(query);
+          const matchesFamily = !familyValue || card.dataset.family === familyValue;
+          const matchesSubfamily = !subfamilyValue || card.dataset.subfamily === subfamilyValue;
+          const prix = Number(card.dataset.price || 0);
+          const matchesPrixMin = prix >= prixMin;
+          const matchesPrixMax = prixMax === null || prix <= prixMax;
+          const visible = matchesQuery && matchesFamily && matchesSubfamily && matchesPrixMin && matchesPrixMax;
+          card.style.display = visible ? '' : 'none';
+          if (visible) {
+            visibleCount += 1;
+          }
+          card.classList.toggle('hide-images', !showImages.checked);
+        });
+
+        emptyState.style.display = visibleCount ? 'none' : 'block';
+        updateSelectionCount();
+      }
+
+      cards.forEach((card) => {
+        const checkbox = card.querySelector('input[type="checkbox"]');
+        checkbox.addEventListener('change', function() {
+          syncCardSelection(card);
+          updateSelectionCount();
+        });
+        syncCardSelection(card);
+      });
+
+      searchInput.addEventListener('input', applyFilters);
+      prixMinInput.addEventListener('input', applyFilters);
+      prixMaxInput.addEventListener('input', applyFilters);
+      triSelect.addEventListener('change', applyFilters);
+      familyFilter.addEventListener('change', function() {
+        updateSubfamilyOptions();
+        applyFilters();
+      });
+      subfamilyFilter.addEventListener('change', applyFilters);
+      showImages.addEventListener('change', applyFilters);
+
+      selectVisibleBtn.addEventListener('click', function() {
+        cards.forEach((card) => {
+          if (card.style.display === 'none') {
+            return;
+          }
+          const checkbox = card.querySelector('input[type="checkbox"]');
+          checkbox.checked = true;
+          syncCardSelection(card);
+        });
+        updateSelectionCount();
+      });
+
+      clearVisibleBtn.addEventListener('click', function() {
+        cards.forEach((card) => {
+          if (card.style.display === 'none') {
+            return;
+          }
+          const checkbox = card.querySelector('input[type="checkbox"]');
+          checkbox.checked = false;
+          syncCardSelection(card);
+        });
+        updateSelectionCount();
+      });
+
+      updateSubfamilyOptions();
+      applyFilters();
+    })();
+  </script>
+{% endblock %}
