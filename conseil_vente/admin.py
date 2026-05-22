@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django import forms
+from django.core.files.storage import default_storage
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.urls import path, reverse
@@ -13,6 +14,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Count, Q
 import os
+from pathlib import Path
 
 from .models import (
     Famille, SousFamille, Article,
@@ -122,6 +124,7 @@ class SousFamilleAdmin(admin.ModelAdmin):
 
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/conseil_vente/article/change_list.html'
     list_display   = (
         'ref_nirgescom', 'designation_tronquee', 'sous_famille',
         'prix_vente_fcfa', 'apercu_image', 'statut_actif'
@@ -143,7 +146,8 @@ class ArticleAdmin(admin.ModelAdmin):
             'description': '⚠️ Prix d\'achat et de revient visibles uniquement par les administrateurs.'
         }),
         ('Image', {
-            'fields': ('image_nom', 'image_upload', 'apercu_image_detail')
+            'fields': ('image_nom', 'image_upload', 'apercu_image_detail'),
+            'description': 'Téléversez une image ici ou utilisez l\'outil d\'upload groupé depuis la liste des articles.'
         }),
         ('Métadonnées', {
             'fields': ('date_import',),
@@ -228,6 +232,80 @@ class ArticleAdmin(admin.ModelAdmin):
     def statut_actif(self, obj):
         return badge('Actif', 'vert') if obj.actif else badge('Inactif', 'gris')
     statut_actif.short_description = 'Statut'
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                'upload-images/',
+                self.admin_site.admin_view(self.upload_images_view),
+                name='conseil_vente_article_upload_images',
+            ),
+        ]
+        return custom + urls
+
+    def upload_images_view(self, request: HttpRequest):
+        """Associe en lot des images aux articles via image_nom ou reference article."""
+        context = {
+            **self.admin_site.each_context(request),
+            'title': 'Upload groupé des images articles',
+            'opts': self.model._meta,
+            'upload_url': reverse('admin:conseil_vente_article_upload_images'),
+        }
+
+        if request.method == 'POST':
+            fichiers = request.FILES.getlist('images')
+            if not fichiers:
+                self.message_user(request, 'Sélectionnez au moins une image.', level=messages.WARNING)
+                return render(request, 'admin/conseil_vente/article/upload_images.html', context)
+
+            articles = list(Article.objects.all())
+            index_image_nom = {}
+            index_ref = {}
+
+            for article in articles:
+                if article.image_nom:
+                    stem = Path(article.image_nom).stem.strip().lower()
+                    if stem:
+                        index_image_nom.setdefault(stem, article)
+                ref = article.ref_nirgescom.strip().lower().rstrip('-')
+                if ref:
+                    index_ref.setdefault(ref, article)
+
+            traites = 0
+            sans_match = []
+
+            for fichier in fichiers:
+                stem = Path(fichier.name).stem.strip().lower()
+                article = index_image_nom.get(stem) or index_ref.get(stem)
+                if article is None:
+                    sans_match.append(fichier.name)
+                    continue
+
+                if article.image_upload:
+                    try:
+                        if default_storage.exists(article.image_upload.name):
+                            default_storage.delete(article.image_upload.name)
+                    except Exception:
+                        pass
+
+                article.image_upload.save(fichier.name, fichier, save=True)
+                traites += 1
+
+            if traites:
+                self.message_user(request, f'{traites} image(s) associée(s) avec succès.', level=messages.SUCCESS)
+            if sans_match:
+                apercu = ', '.join(sans_match[:8])
+                suffixe = '' if len(sans_match) <= 8 else f' ... (+{len(sans_match) - 8})'
+                self.message_user(
+                    request,
+                    f'Aucune correspondance trouvée pour : {apercu}{suffixe}',
+                    level=messages.WARNING,
+                )
+
+            return redirect('admin:conseil_vente_article_upload_images')
+
+        return render(request, 'admin/conseil_vente/article/upload_images.html', context)
 
 
 # ─── CONSEIL ─────────────────────────────────────────────────────────────────

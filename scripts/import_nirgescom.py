@@ -48,6 +48,11 @@ FAMILLES_PROVISOIRES = {
 IMAGE_EXTENSIONS = ['.jpg', '.JPG', '.png', '.PNG', '.jpeg', '.JPEG']
 
 
+def normaliser_ref_article(ref_nirgescom: str) -> str:
+    """Nettoie la reference article en supprimant le tiret final parasite."""
+    return str(ref_nirgescom).strip().rstrip('-').strip()
+
+
 def trouver_extension_image(nom_base: str, repertoire: str) -> str | None:
     """
     Cherche le fichier image dans le répertoire en testant les extensions.
@@ -75,7 +80,7 @@ def lier_sous_famille(ref_nirgescom: str, index_sf: dict) -> SousFamille | None:
     Ex: '1003150013-' → préfixe '100315' → cherche code_sf '100315'
     """
     # Nettoyer le code (retirer le tiret final si présent)
-    code_clean = str(ref_nirgescom).rstrip('-').strip()
+    code_clean = normaliser_ref_article(ref_nirgescom)
     # Prendre les 6 premiers chiffres
     if len(code_clean) >= 6:
         prefix = code_clean[:6]
@@ -175,7 +180,7 @@ def importer_articles(
     df.columns = ['code', 'designation', 'stock', 'achat', 'detail', 'revient', 'image']
 
     # Nettoyages de base
-    df['code']        = df['code'].astype(str).str.strip()
+    df['code']        = df['code'].astype(str).map(normaliser_ref_article)
     df['designation'] = df['designation'].astype(str).str.strip()
     df['image']       = df['image'].astype(str).str.strip().replace('nan', '')
 
@@ -196,7 +201,7 @@ def importer_articles(
 
     for idx, row in df.iterrows():
         try:
-            ref = str(row['code']).strip()
+            ref = normaliser_ref_article(row['code'])
             if not ref:
                 nb_ignores += 1
                 continue

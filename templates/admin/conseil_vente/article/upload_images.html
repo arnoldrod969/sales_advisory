@@ -1,0 +1,59 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Upload groupé des images articles{% endblock %}
+
+{% block content %}
+<div style="max-width:760px">
+  <h1 style="margin-bottom:8px">Upload groupé des images articles</h1>
+  <p style="color:#6c757d;margin-bottom:24px">
+    Téléversez plusieurs images en une fois. Chaque image sera associée automatiquement
+    à un article si son nom de fichier correspond à <code>image_nom</code> ou à la
+    <code>référence article</code>.
+  </p>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div style="padding:12px 16px;border-radius:6px;margin-bottom:16px;
+        background:{% if message.tags == 'success' %}#d4edda{% elif message.tags == 'error' %}#f8d7da{% else %}#fff3cd{% endif %};
+        color:{% if message.tags == 'success' %}#155724{% elif message.tags == 'error' %}#721c24{% else %}#856404{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:20px;margin-bottom:16px">
+      <h3 style="margin:0 0 8px;font-size:15px">Images à téléverser</h3>
+      <p style="color:#6c757d;font-size:13px;margin:0 0 12px">
+        Sélectionnez plusieurs fichiers <code>.jpg</code>, <code>.jpeg</code> ou <code>.png</code>.
+      </p>
+      <input type="file" name="images" accept=".jpg,.jpeg,.png,.JPG,.JPEG,.PNG" multiple required
+        style="display:block;width:100%;padding:8px;border:1px solid #ced4da;border-radius:4px;background:#fff">
+    </div>
+
+    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:16px;margin-bottom:24px">
+      <strong style="display:block;margin-bottom:6px;color:#856404">Règle de correspondance</strong>
+      <div style="font-size:13px;color:#856404;line-height:1.7">
+        <div>1. Nom du fichier sans extension = <code>image_nom</code> de l'article</div>
+        <div>2. Sinon nom du fichier sans extension = <code>ref_nirgescom</code> de l'article</div>
+        <div>Exemples : <code>DSC_8469.jpg</code> ou <code>1003150013.jpg</code></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <button type="submit"
+        style="padding:10px 24px;background:#417690;color:#fff;border:none;
+               border-radius:4px;font-size:14px;cursor:pointer;font-weight:500">
+        Téléverser et associer
+      </button>
+      <a href="{% url 'admin:conseil_vente_article_changelist' %}"
+        style="padding:10px 20px;background:#fff;color:#417690;border:1px solid #dee2e6;
+               border-radius:4px;font-size:14px;text-decoration:none;display:inline-flex;align-items:center">
+        Retour aux articles
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}
