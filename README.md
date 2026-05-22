@@ -225,6 +225,28 @@ Priorité d'affichage :
 
 En production Docker, les images téléversées sont conservées dans le volume `media_data`.
 
+### Upload groupé des images
+
+Dans l'administration :
+
+1. Aller dans **Articles**
+2. Cliquer sur **Upload groupé images**
+3. Choisir soit :
+   - plusieurs images directement
+   - une archive `ZIP` pour les gros volumes
+
+Pour de très gros lots, le format `ZIP` est recommandé.
+
+### Suppression massive du catalogue
+
+Dans l'administration :
+
+1. Aller dans **Articles**
+2. Cliquer sur **Supprimer le catalogue**
+3. Taper `SUPPRIMER` pour confirmer
+
+Cette action est préférable à la sélection manuelle de milliers de lignes.
+
 ### Format du fichier XLS attendu
 
 | Colonne | Contenu |
@@ -275,6 +297,8 @@ Si la connexion au serveur est perdue en cours d'utilisation :
 | `PDV_PAR_USERNAME` | `middleware.py` | Mapping compte vendeur ↔ point de vente |
 | `DEBUG` | `settings.py` | `False` obligatoire en production |
 | `ALLOWED_HOSTS` | `settings.py` | Ajouter l'IP du serveur en production |
+| `DJANGO_DATA_UPLOAD_MAX_NUMBER_FIELDS` | `.env` | Limite du nombre de champs POST autorisés |
+| `DJANGO_DATA_UPLOAD_MAX_NUMBER_FILES` | `.env` | Limite du nombre de fichiers uploadés dans une requête |
 
 ---
 

@@ -1,0 +1,40 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Suppression massive du catalogue{% endblock %}
+
+{% block content %}
+<div style="max-width:680px">
+  <h1 style="margin-bottom:8px;color:#991b1b">Suppression massive du catalogue</h1>
+  <p style="color:#6c757d;margin-bottom:24px">
+    Cette action supprime tous les articles du catalogue. Utilisez-la seulement si vous voulez repartir d'un catalogue vide.
+  </p>
+
+  <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:18px;margin-bottom:20px;color:#991b1b;line-height:1.7">
+    <strong>Attention :</strong><br>
+    Les recommandations liées aux articles seront également impactées par la suppression en cascade.<br>
+    Les conseils déjà enregistrés seront aussi affectés si leurs articles liés sont supprimés.
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:20px;margin-bottom:16px">
+      <label for="id_confirmation" style="display:block;font-weight:600;margin-bottom:8px">
+        Pour confirmer, tapez <code>SUPPRIMER</code>
+      </label>
+      <input type="text" id="id_confirmation" name="confirmation"
+        style="display:block;width:100%;padding:10px;border:1px solid #ced4da;border-radius:4px;background:#fff">
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <button type="submit"
+        style="padding:10px 24px;background:#b91c1c;color:#fff;border:none;border-radius:4px;font-size:14px;cursor:pointer;font-weight:500">
+        Confirmer la suppression
+      </button>
+      <a href="{% url 'admin:conseil_vente_article_changelist' %}"
+        style="padding:10px 20px;background:#fff;color:#417690;border:1px solid #dee2e6;border-radius:4px;font-size:14px;text-decoration:none;display:inline-flex;align-items:center">
+        Annuler
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

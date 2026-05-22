@@ -25,11 +25,22 @@
     {% csrf_token %}
 
     <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:20px;margin-bottom:16px">
-      <h3 style="margin:0 0 8px;font-size:15px">Images à téléverser</h3>
+      <h3 style="margin:0 0 8px;font-size:15px">Images à téléverser (multi-fichiers)</h3>
       <p style="color:#6c757d;font-size:13px;margin:0 0 12px">
         Sélectionnez plusieurs fichiers <code>.jpg</code>, <code>.jpeg</code> ou <code>.png</code>.
+        Recommandé pour des lots moyens.
       </p>
-      <input type="file" name="images" accept=".jpg,.jpeg,.png,.JPG,.JPEG,.PNG" multiple required
+      <input type="file" name="images" accept=".jpg,.jpeg,.png,.JPG,.JPEG,.PNG" multiple
+        style="display:block;width:100%;padding:8px;border:1px solid #ced4da;border-radius:4px;background:#fff">
+    </div>
+
+    <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:20px;margin-bottom:16px">
+      <h3 style="margin:0 0 8px;font-size:15px">Archive ZIP (recommandé pour gros volume)</h3>
+      <p style="color:#6c757d;font-size:13px;margin:0 0 12px">
+        Pour plus de 300 à 500 images, préférez une archive <code>.zip</code> contenant les images.
+        Le système lira automatiquement les fichiers internes valides.
+      </p>
+      <input type="file" name="archive_zip" accept=".zip"
         style="display:block;width:100%;padding:8px;border:1px solid #ced4da;border-radius:4px;background:#fff">
     </div>
 
@@ -39,6 +50,7 @@
         <div>1. Nom du fichier sans extension = <code>image_nom</code> de l'article</div>
         <div>2. Sinon nom du fichier sans extension = <code>ref_nirgescom</code> de l'article</div>
         <div>Exemples : <code>DSC_8469.jpg</code> ou <code>1003150013.jpg</code></div>
+        <div>3. Les fichiers en doublon dans le même lot sont ignorés après le premier.</div>
       </div>
     </div>
 

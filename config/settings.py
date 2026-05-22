@@ -140,6 +140,8 @@ LOGIN_URL = '/login/'
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+DATA_UPLOAD_MAX_NUMBER_FIELDS = int(os.getenv('DJANGO_DATA_UPLOAD_MAX_NUMBER_FIELDS', '20000'))
+DATA_UPLOAD_MAX_NUMBER_FILES = int(os.getenv('DJANGO_DATA_UPLOAD_MAX_NUMBER_FILES', '5000'))
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

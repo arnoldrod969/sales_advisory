@@ -2,6 +2,9 @@
 
 {% block object-tools-items %}
   <li>
+    <a href="{% url 'admin:conseil_vente_article_supprimer_catalogue' %}" style="background:#b91c1c">Supprimer le catalogue</a>
+  </li>
+  <li>
     <a href="{% url 'admin:conseil_vente_article_upload_images' %}">Upload groupé images</a>
   </li>
   {{ block.super }}

@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.urls import path, reverse
@@ -15,6 +16,7 @@ from django.db import transaction
 from django.db.models import Count, Q
 import os
 from pathlib import Path
+import zipfile
 
 from .models import (
     Famille, SousFamille, Article,
@@ -132,6 +134,7 @@ class ArticleAdmin(admin.ModelAdmin):
     list_filter    = ('actif', 'sous_famille__famille', 'sous_famille')
     search_fields  = ('ref_nirgescom', 'designation')
     ordering       = ('designation',)
+    actions        = ('supprimer_articles_selectionnes',)
     readonly_fields = (
         'ref_nirgescom', 'date_import', 'apercu_image_detail',
         'prix_achat_affiche', 'prix_revient_affiche'
@@ -233,9 +236,26 @@ class ArticleAdmin(admin.ModelAdmin):
         return badge('Actif', 'vert') if obj.actif else badge('Inactif', 'gris')
     statut_actif.short_description = 'Statut'
 
+    def supprimer_articles_selectionnes(self, request, queryset):
+        nb = queryset.count()
+        if nb == 0:
+            self.message_user(request, 'Aucun article sélectionné.', level=messages.WARNING)
+            return
+
+        with transaction.atomic():
+            queryset.delete()
+
+        self.message_user(request, f'{nb} article(s) supprimé(s) avec succès.', level=messages.SUCCESS)
+    supprimer_articles_selectionnes.short_description = 'Supprimer les articles sélectionnés'
+
     def get_urls(self):
         urls = super().get_urls()
         custom = [
+            path(
+                'supprimer-catalogue/',
+                self.admin_site.admin_view(self.supprimer_catalogue_view),
+                name='conseil_vente_article_supprimer_catalogue',
+            ),
             path(
                 'upload-images/',
                 self.admin_site.admin_view(self.upload_images_view),
@@ -243,6 +263,33 @@ class ArticleAdmin(admin.ModelAdmin):
             ),
         ]
         return custom + urls
+
+    def supprimer_catalogue_view(self, request: HttpRequest):
+        """Supprime tout le catalogue article apres confirmation explicite."""
+        context = {
+            **self.admin_site.each_context(request),
+            'title': 'Suppression massive du catalogue',
+            'opts': self.model._meta,
+        }
+
+        if request.method == 'POST':
+            confirmation = request.POST.get('confirmation', '').strip().upper()
+            if confirmation != 'SUPPRIMER':
+                self.message_user(
+                    request,
+                    'Tapez SUPPRIMER pour confirmer la suppression massive du catalogue.',
+                    level=messages.WARNING,
+                )
+                return render(request, 'admin/conseil_vente/article/supprimer_catalogue.html', context)
+
+            nb = Article.objects.count()
+            with transaction.atomic():
+                Article.objects.all().delete()
+
+            self.message_user(request, f'{nb} article(s) supprimé(s) du catalogue.', level=messages.SUCCESS)
+            return redirect('admin:conseil_vente_article_changelist')
+
+        return render(request, 'admin/conseil_vente/article/supprimer_catalogue.html', context)
 
     def upload_images_view(self, request: HttpRequest):
         """Associe en lot des images aux articles via image_nom ou reference article."""
@@ -255,8 +302,9 @@ class ArticleAdmin(admin.ModelAdmin):
 
         if request.method == 'POST':
             fichiers = request.FILES.getlist('images')
-            if not fichiers:
-                self.message_user(request, 'Sélectionnez au moins une image.', level=messages.WARNING)
+            archive = request.FILES.get('archive_zip')
+            if not fichiers and archive is None:
+                self.message_user(request, 'Sélectionnez des images ou un fichier ZIP.', level=messages.WARNING)
                 return render(request, 'admin/conseil_vente/article/upload_images.html', context)
 
             articles = list(Article.objects.all())
@@ -272,14 +320,44 @@ class ArticleAdmin(admin.ModelAdmin):
                 if ref:
                     index_ref.setdefault(ref, article)
 
+            uploads = []
+            uploads.extend((fichier.name, fichier) for fichier in fichiers)
+
+            if archive is not None:
+                if not archive.name.lower().endswith('.zip'):
+                    self.message_user(request, 'Le fichier archive doit être au format .zip.', level=messages.ERROR)
+                    return render(request, 'admin/conseil_vente/article/upload_images.html', context)
+                try:
+                    with zipfile.ZipFile(archive) as zf:
+                        for info in zf.infolist():
+                            if info.is_dir():
+                                continue
+                            nom = Path(info.filename).name
+                            if not nom:
+                                continue
+                            suffixe = Path(nom).suffix.lower()
+                            if suffixe not in {'.jpg', '.jpeg', '.png'}:
+                                continue
+                            uploads.append((nom, ContentFile(zf.read(info.filename), name=nom)))
+                except zipfile.BadZipFile:
+                    self.message_user(request, 'Archive ZIP invalide.', level=messages.ERROR)
+                    return render(request, 'admin/conseil_vente/article/upload_images.html', context)
+
             traites = 0
             sans_match = []
+            doublons = []
+            deja_vus = set()
 
-            for fichier in fichiers:
-                stem = Path(fichier.name).stem.strip().lower()
+            for nom_fichier, fichier in uploads:
+                stem = Path(nom_fichier).stem.strip().lower()
+                if stem in deja_vus:
+                    doublons.append(nom_fichier)
+                    continue
+                deja_vus.add(stem)
+
                 article = index_image_nom.get(stem) or index_ref.get(stem)
                 if article is None:
-                    sans_match.append(fichier.name)
+                    sans_match.append(nom_fichier)
                     continue
 
                 if article.image_upload:
@@ -289,7 +367,7 @@ class ArticleAdmin(admin.ModelAdmin):
                     except Exception:
                         pass
 
-                article.image_upload.save(fichier.name, fichier, save=True)
+                article.image_upload.save(nom_fichier, fichier, save=True)
                 traites += 1
 
             if traites:
@@ -300,6 +378,14 @@ class ArticleAdmin(admin.ModelAdmin):
                 self.message_user(
                     request,
                     f'Aucune correspondance trouvée pour : {apercu}{suffixe}',
+                    level=messages.WARNING,
+                )
+            if doublons:
+                apercu = ', '.join(doublons[:8])
+                suffixe = '' if len(doublons) <= 8 else f' ... (+{len(doublons) - 8})'
+                self.message_user(
+                    request,
+                    f'Fichiers dupliqués ignorés : {apercu}{suffixe}',
                     level=messages.WARNING,
                 )
 
