@@ -48,6 +48,12 @@ def badge(texte, couleur):
 
 def get_article_image_url(article):
     """Construit l'URL d'image article en testant les extensions disponibles."""
+    if getattr(article, 'image_upload', None):
+        try:
+            return article.image_upload.url
+        except ValueError:
+            pass
+
     if not article.image_nom:
         return None
 
@@ -137,7 +143,7 @@ class ArticleAdmin(admin.ModelAdmin):
             'description': '⚠️ Prix d\'achat et de revient visibles uniquement par les administrateurs.'
         }),
         ('Image', {
-            'fields': ('image_nom', 'apercu_image_detail')
+            'fields': ('image_nom', 'image_upload', 'apercu_image_detail')
         }),
         ('Métadonnées', {
             'fields': ('date_import',),
@@ -188,7 +194,7 @@ class ArticleAdmin(admin.ModelAdmin):
     prix_revient_affiche.short_description = 'Prix revient (confidentiel)'
 
     def apercu_image(self, obj):
-        if not obj.image_nom:
+        if not obj.image_nom and not obj.image_upload:
             return '—'
         img_url = self._get_image_url(obj)
         if img_url:
@@ -204,7 +210,7 @@ class ArticleAdmin(admin.ModelAdmin):
     apercu_image.short_description = 'Image'
 
     def apercu_image_detail(self, obj):
-        if not obj.image_nom:
+        if not obj.image_nom and not obj.image_upload:
             return 'Aucune image'
         img_url = self._get_image_url(obj)
         if img_url:
@@ -213,7 +219,7 @@ class ArticleAdmin(admin.ModelAdmin):
                 'object-fit:contain;border-radius:8px;border:1px solid #dee2e6;padding:4px">',
                 img_url
             )
-        return format_html('Fichier : <code>{}</code> (image non trouvée dans le répertoire)', obj.image_nom)
+        return format_html('Fichier : <code>{}</code> (image non trouvée dans le répertoire)', obj.image_nom or 'upload indisponible')
     apercu_image_detail.short_description = 'Aperçu image'
 
     def _get_image_url(self, obj):

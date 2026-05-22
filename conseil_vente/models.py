@@ -68,6 +68,12 @@ class Article(models.Model):
         max_length=100, blank=True,
         help_text='Nom du fichier image sans extension (ex: DSC_8469)'
     )
+    image_upload = models.ImageField(
+        upload_to='articles/',
+        blank=True,
+        null=True,
+        help_text='Image téléversée depuis l\'administration'
+    )
     actif         = models.BooleanField(default=True)
     date_import   = models.DateTimeField(auto_now=True)
 
@@ -84,6 +90,8 @@ class Article(models.Model):
         Retourne l'URL de l'image si disponible.
         base_url : préfixe configurable depuis les settings
         """
+        if self.image_upload:
+            return self.image_upload.url
         if not self.image_nom:
             return None
         if base_url:

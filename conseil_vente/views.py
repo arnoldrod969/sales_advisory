@@ -35,6 +35,16 @@ def _get_image_url(image_nom):
     return None
 
 
+def _get_article_image_url(article):
+    """Priorise l'image téléversée, sinon retombe sur l'image Nirgescom."""
+    if getattr(article, 'image_upload', None):
+        try:
+            return article.image_upload.url
+        except ValueError:
+            pass
+    return _get_image_url(article.image_nom)
+
+
 def _utilisateur_peut_choisir_pdv(user):
     """Retourne True si l'utilisateur peut choisir manuellement un PDV."""
     return user.is_staff or user.is_superuser
@@ -146,7 +156,7 @@ def api_recommandations(request):
             'nom':          a.designation,
             'prix':         int(a.prix_detail),
             'sous_famille': str(a.sous_famille) if a.sous_famille else '',
-            'image_url':    _get_image_url(a.image_nom),
+            'image_url':    _get_article_image_url(a),
         })
 
     return JsonResponse({'articles': articles})

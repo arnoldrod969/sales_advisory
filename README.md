@@ -63,6 +63,59 @@ jd_conseil_vente/
 
 ---
 
+## Déploiement recommandé
+
+Le mode recommandé pour Ubuntu 22.04 est désormais **Docker Compose**.
+
+### 1. Préparer l'environnement
+
+```bash
+cp .env.example .env
+```
+
+Puis adapter au minimum :
+
+- `DJANGO_SECRET_KEY`
+- `DJANGO_ALLOWED_HOSTS`
+- `DJANGO_CSRF_TRUSTED_ORIGINS`
+- `DB_PASSWORD`
+- `DB_ROOT_PASSWORD`
+- `APP_PORT`
+
+### 2. Lancer la stack
+
+```bash
+docker compose up -d --build
+```
+
+La stack démarre :
+
+- `db` : MySQL 8
+- `web` : Django + Gunicorn
+- `proxy` : Nginx
+
+### 3. Initialiser l'application
+
+```bash
+docker compose exec web python manage.py createsuperuser
+docker compose exec web python manage.py shell < scripts/setup_initial.py
+```
+
+### 4. Accès
+
+```text
+http://IP_DU_SERVEUR:APP_PORT/
+http://IP_DU_SERVEUR:APP_PORT/admin/
+```
+
+Les volumes Docker persistants conservent :
+
+- la base MySQL
+- les fichiers `media/`
+- les fichiers `staticfiles/`
+
+---
+
 ## Installation rapide
 
 ### 1. Prérequis
@@ -100,25 +153,22 @@ GRANT ALL PRIVILEGES ON jd_conseil_vente.* TO 'jd_user'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-### 5. Configuration
+### 5. Configuration manuelle
 
-Dans `config/settings.py`, renseigner :
+Le projet lit maintenant la configuration depuis des variables d'environnement.
+Exemple minimal hors Docker :
 
-```python
-DATABASES = {
-    'default': {
-        'ENGINE':   'django.db.backends.mysql',
-        'NAME':     'jd_conseil_vente',
-        'USER':     'jd_user',
-        'PASSWORD': 'MotDePasseFort!',
-        'HOST':     'localhost',
-        'PORT':     '3306',
-    }
-}
-
-# Répertoire des images produits Nirgescom
-NIRGESCOM_IMAGES_DIR = BASE_DIR / 'media' / 'nirgescom'
-NIRGESCOM_IMAGES_URL = '/media/nirgescom/'
+```bash
+export DJANGO_SECRET_KEY="change-me"
+export DJANGO_DEBUG="False"
+export DJANGO_ALLOWED_HOSTS="localhost,127.0.0.1,IP_DU_SERVEUR"
+export DB_NAME="jd_conseil_vente"
+export DB_USER="jd_user"
+export DB_PASSWORD="MotDePasseFort!"
+export DB_HOST="localhost"
+export DB_PORT="3306"
+export MEDIA_ROOT="$(pwd)/media"
+export NIRGESCOM_IMAGES_DIR="$(pwd)/media/nirgescom"
 ```
 
 ### 6. Migrations et données initiales
@@ -159,6 +209,21 @@ L'import se fait depuis l'interface admin, sans ligne de commande :
 5. Vérifier le bilan
 
 L'import est **idempotent** : relancer plusieurs fois ne crée pas de doublons. La clé de correspondance est la référence Nirgescom de chaque article (`ref_nirgescom`).
+
+### Gestion des images produits
+
+Deux modes coexistent :
+
+1. **Import catalogue** : le fichier XLS renseigne `image_nom`
+2. **Administration article** : l'image peut être téléversée directement dans la fiche `Article`
+
+Priorité d'affichage :
+
+1. image téléversée via l'administration
+2. image résolue via `image_nom`
+3. placeholder visuel
+
+En production Docker, les images téléversées sont conservées dans le volume `media_data`.
 
 ### Format du fichier XLS attendu
 

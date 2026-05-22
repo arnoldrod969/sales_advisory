@@ -13,6 +13,18 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 
+
+def env_bool(name, default=False):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def env_list(name, default=''):
+    value = os.getenv(name, default)
+    return [item.strip() for item in value.split(',') if item.strip()]
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,12 +33,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+p#sr3dy@(cvzq-+pfv172iq13gb&j$o(+$3ltd!wh$onu388m'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-dev-only-change-me')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool('DJANGO_DEBUG', True)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 
 
 # Application definition
@@ -78,11 +90,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
   'default': {
     'ENGINE': 'django.db.backends.mysql',
-    'NAME':   'jd_conseil_vente',
-    'USER':   'jd_user',
-    'PASSWORD': '1234',   # ← votre mot de passe
-    'HOST':   'localhost',
-    'PORT':   '3306',
+    'NAME':   os.getenv('DB_NAME', 'jd_conseil_vente'),
+    'USER':   os.getenv('DB_USER', 'jd_user'),
+    'PASSWORD': os.getenv('DB_PASSWORD', '1234'),
+    'HOST':   os.getenv('DB_HOST', 'localhost'),
+    'PORT':   os.getenv('DB_PORT', '3306'),
     'OPTIONS': {'charset': 'utf8mb4'},
   }
 }
@@ -127,6 +139,7 @@ USE_TZ = True
 LOGIN_URL = '/login/'
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -136,11 +149,13 @@ STATICFILES_DIRS = [
 ]
 
 # Répertoire des images produits Nirgescom
-NIRGESCOM_IMAGES_DIR = os.path.join(BASE_DIR, 'media', 'nirgescom')
-NIRGESCOM_IMAGES_URL = '/media/nirgescom/'
+MEDIA_URL = os.getenv('MEDIA_URL', '/media/')
+MEDIA_ROOT = Path(os.getenv('MEDIA_ROOT', str(BASE_DIR / 'media')))
+
+NIRGESCOM_IMAGES_DIR = os.getenv('NIRGESCOM_IMAGES_DIR', str(MEDIA_ROOT / 'nirgescom'))
+NIRGESCOM_IMAGES_URL = os.getenv('NIRGESCOM_IMAGES_URL', '/media/nirgescom/')
 NIRGESCOM_IMAGE_EXTENSIONS = ['.jpg', '.JPG', '.png', '.PNG', '.jpeg', '.JPEG']
 
-# Media files (uploads, images produits)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+CSRF_TRUSTED_ORIGINS = env_list('DJANGO_CSRF_TRUSTED_ORIGINS', '')
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
  
