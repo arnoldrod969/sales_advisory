@@ -448,8 +448,12 @@ class RecommandationAdmin(admin.ModelAdmin):
         familles = Famille.objects.order_by('code')
         sous_familles = SousFamille.objects.select_related('famille').filter(actif=True).order_by('code')
 
-        problematique_id = request.POST.get('problematique_id') or request.GET.get('problematique_id')
-        classe_sociale_id = request.POST.get('classe_sociale_id') or request.GET.get('classe_sociale_id')
+        if request.method == 'POST':
+            problematique_id = request.POST.get('problematique_id')
+            classe_sociale_id = request.POST.get('classe_sociale_id')
+        else:
+            problematique_id = request.GET.get('problematique_id')
+            classe_sociale_id = request.GET.get('classe_sociale_id')
 
         recommandations_existantes = []
         articles_payload = []
