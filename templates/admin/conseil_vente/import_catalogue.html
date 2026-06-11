@@ -8,7 +8,7 @@
 
   <h1 style="margin-bottom:8px">Importer le catalogue Nirgescom</h1>
   <p style="color:#6c757d;margin-bottom:24px">
-    Importez un fichier XLS exporté depuis Nirgescom.
+    Importez un fichier XLS, XLSX ou CSV exporté depuis Nirgescom.
     Les articles existants seront mis à jour, les nouveaux seront créés.
   </p>
 
@@ -28,9 +28,9 @@
     <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:20px;margin-bottom:16px">
       <h3 style="margin:0 0 4px;font-size:15px">Fichier catalogue (obligatoire)</h3>
       <p style="color:#6c757d;font-size:13px;margin:0 0 12px">
-        Export XLS Nirgescom — colonnes attendues : Code, Designation, Achat, Detail, Revient, image
+        Export Nirgescom — formats acceptés : XLS, XLSX, CSV ; colonnes attendues : Code, Designation, Achat, Detail, Revient, image
       </p>
-      <input type="file" name="fichier_xls" accept=".xls,.xlsx" required
+      <input type="file" name="fichier_xls" accept=".xls,.xlsx,.csv" required
         style="display:block;width:100%;padding:8px;border:1px solid #ced4da;border-radius:4px;background:#fff">
     </div>
 
@@ -68,7 +68,7 @@
       <button type="submit"
         style="padding:10px 24px;background:#417690;color:#fff;border:none;
                border-radius:4px;font-size:14px;cursor:pointer;font-weight:500">
-        ▶ Lancer l'import
+        ▶ Lancer l'import en arrière-plan
       </button>
       <a href="{% url 'admin:conseil_vente_importcatalogue_changelist' %}"
         style="padding:10px 20px;background:#fff;color:#417690;border:1px solid #dee2e6;

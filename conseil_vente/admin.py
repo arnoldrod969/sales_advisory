@@ -15,6 +15,9 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Count, Q
 import os
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 import zipfile
 
@@ -801,59 +804,87 @@ class ImportCatalogueAdmin(admin.ModelAdmin):
         }
 
         if request.method == 'POST' and request.FILES.get('fichier_xls'):
-            import tempfile, shutil
-            from pathlib import Path
-
             fichier = request.FILES['fichier_xls']
             fichier_sf = request.FILES.get('fichier_sf')
             repertoire_images_override = request.POST.get('repertoire_images_override', '').strip()
             context['repertoire_images_override'] = repertoire_images_override
 
-            # Sauvegarder temporairement les fichiers uploadés
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.xls') as tmp_xls:
+            suffixe_catalogue = Path(fichier.name).suffix.lower() or '.xls'
+            if suffixe_catalogue not in {'.xls', '.xlsx', '.csv'}:
+                self.message_user(
+                    request,
+                    'Format non supporté. Utilisez un fichier .xls, .xlsx ou .csv.',
+                    messages.ERROR,
+                )
+                return render(request, 'admin/conseil_vente/import_catalogue.html', context)
+
+            tmp_dir = Path(tempfile.gettempdir()) / 'sale_advisory_imports'
+            tmp_dir.mkdir(parents=True, exist_ok=True)
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffixe_catalogue, dir=tmp_dir) as tmp_xls:
                 for chunk in fichier.chunks():
                     tmp_xls.write(chunk)
                 chemin_xls = tmp_xls.name
 
             chemin_sf = None
             if fichier_sf:
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.csv') as tmp_sf:
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.csv', dir=tmp_dir) as tmp_sf:
                     for chunk in fichier_sf.chunks():
                         tmp_sf.write(chunk)
                     chemin_sf = tmp_sf.name
 
+            log_import = None
             try:
-                from scripts.import_nirgescom import lancer_import, importer_articles, charger_sous_familles
-
                 images_dir = repertoire_images_override or getattr(settings, 'NIRGESCOM_IMAGES_DIR', None)
 
-                if chemin_sf:
-                    from scripts.import_nirgescom import importer_familles_et_sous_familles
-                    index_sf = importer_familles_et_sous_familles(chemin_sf)
-                else:
-                    index_sf = charger_sous_familles()
-
-                bilan = importer_articles(
-                    chemin_xls=chemin_xls,
-                    index_sf=index_sf,
-                    repertoire_images=images_dir,
+                log_import = ImportCatalogue.objects.create(
+                    nom_fichier=fichier.name,
+                    source='nirgescom',
+                    statut='en_cours',
                     importe_par=request.user.username,
                 )
 
-                msg = (
-                    f'Import terminé — {bilan.nb_articles_crees} créés, '
-                    f'{bilan.nb_articles_mis_a_jour} mis à jour, '
-                    f'{bilan.nb_articles_ignores} ignorés.'
+                commande = [
+                    sys.executable,
+                    'manage.py',
+                    'import_catalogue',
+                    '--fichier', chemin_xls,
+                    '--importe-par', request.user.username,
+                    '--import-log-id', str(log_import.pk),
+                ]
+                if chemin_sf:
+                    commande.extend(['--fichier-sf', chemin_sf])
+                if images_dir:
+                    commande.extend(['--images-dir', images_dir])
+
+                popen_kwargs = {
+                    'cwd': settings.BASE_DIR,
+                    'stdout': subprocess.DEVNULL,
+                    'stderr': subprocess.DEVNULL,
+                    'close_fds': True,
+                }
+                creationflags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+                if creationflags:
+                    popen_kwargs['creationflags'] = creationflags
+
+                subprocess.Popen(commande, **popen_kwargs)
+
+                self.message_user(
+                    request,
+                    f'Import lancé en arrière-plan. Suivez son statut dans la ligne #{log_import.pk}.',
+                    messages.SUCCESS,
                 )
-                niveau = messages.SUCCESS if bilan.statut == 'succes' else messages.WARNING
-                self.message_user(request, msg, niveau)
 
             except Exception as e:
-                self.message_user(request, f'Erreur lors de l\'import : {e}', messages.ERROR)
-            finally:
-                os.unlink(chemin_xls)
+                if log_import is not None:
+                    log_import.statut = 'erreur'
+                    log_import.erreurs = f'Echec du lancement de l\'import: {e}'
+                    log_import.save(update_fields=['statut', 'erreurs'])
+                if os.path.exists(chemin_xls):
+                    os.unlink(chemin_xls)
                 if chemin_sf and os.path.exists(chemin_sf):
                     os.unlink(chemin_sf)
+                self.message_user(request, f'Erreur lors de l\'import : {e}', messages.ERROR)
 
             return redirect(
                 reverse('admin:conseil_vente_importcatalogue_changelist')

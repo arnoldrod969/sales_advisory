@@ -8,8 +8,6 @@ Ou mieux, intégré comme management command (recommandé) :
     python manage.py import_catalogue --fichier=cataloguemokolo_bon.xls
 """
 
-import os
-import sys
 import logging
 from pathlib import Path
 from datetime import datetime
@@ -18,13 +16,15 @@ from datetime import datetime
 # pip install xlrd pandas
 
 import pandas as pd
-from django.conf import settings
 
 from conseil_vente.models import (
     Famille, SousFamille, Article, ImportCatalogue
 )
 
 logger = logging.getLogger(__name__)
+
+COLONNES_SOURCE = ['Code', ' Designation', 'Stock', 'Achat', 'Detail', 'Revient', 'image']
+COLONNES_CIBLE = ['code', 'designation', 'stock', 'achat', 'detail', 'revient', 'image']
 
 
 # ─── Mapping familles provisoire ─────────────────────────────────────────────
@@ -65,6 +65,81 @@ def trouver_extension_image(nom_base: str, repertoire: str) -> str | None:
         if chemin.exists():
             return ext
     return None
+
+
+def convertir_nombre(valeur):
+    """Convertit les nombres issus du XLS ou d'un CSV francophone."""
+    if pd.isna(valeur):
+        return None
+    if isinstance(valeur, (int, float)):
+        return float(valeur)
+
+    texte = str(valeur).strip()
+    if not texte:
+        return None
+
+    texte = texte.replace('\xa0', '').replace(' ', '').replace(',', '.')
+    try:
+        return float(texte)
+    except ValueError:
+        return None
+
+
+def lire_catalogue_csv(chemin_catalogue: str) -> pd.DataFrame:
+    """Charge un CSV catalogue avec fallback d'encodage."""
+    dernieres_erreurs = []
+    for encodage in ('utf-8-sig', 'cp1252', 'latin1'):
+        try:
+            return pd.read_csv(
+                chemin_catalogue,
+                sep=';',
+                encoding=encodage,
+                dtype=str,
+                keep_default_na=False,
+                on_bad_lines='skip',
+            )
+        except UnicodeDecodeError as exc:
+            dernieres_erreurs.append(f'{encodage}: {exc}')
+
+    raise UnicodeDecodeError(
+        'catalogue-csv',
+        b'',
+        0,
+        1,
+        ' ; '.join(dernieres_erreurs) or 'encodage CSV non lisible',
+    )
+
+
+def charger_dataframe_catalogue(chemin_catalogue: str) -> pd.DataFrame:
+    """Charge le catalogue depuis un XLS, XLSX ou CSV Nirgescom."""
+    suffixe = Path(chemin_catalogue).suffix.lower()
+
+    if suffixe == '.csv':
+        df = lire_catalogue_csv(chemin_catalogue)
+    elif suffixe == '.xls':
+        df = pd.read_excel(chemin_catalogue, engine='xlrd')
+    elif suffixe == '.xlsx':
+        df = pd.read_excel(chemin_catalogue)
+    else:
+        raise ValueError('Format non supporté. Utilisez un fichier .xls, .xlsx ou .csv.')
+
+    colonnes_manquantes = [col for col in COLONNES_SOURCE if col not in df.columns]
+    if colonnes_manquantes:
+        raise ValueError(
+            'Colonnes manquantes dans le catalogue : ' + ', '.join(colonnes_manquantes)
+        )
+
+    df = df[COLONNES_SOURCE].copy()
+    df.columns = COLONNES_CIBLE
+
+    df['code'] = df['code'].astype(str).map(normaliser_ref_article)
+    df['designation'] = df['designation'].astype(str).str.strip()
+    df['image'] = df['image'].astype(str).str.strip().replace({'nan': '', 'None': ''})
+
+    for colonne in ['stock', 'achat', 'detail', 'revient']:
+        df[colonne] = df[colonne].map(convertir_nombre)
+
+    return df
 
 
 def charger_sous_familles() -> dict:
@@ -147,7 +222,8 @@ def importer_articles(
     chemin_xls: str,
     index_sf: dict,
     repertoire_images: str = None,
-    importe_par: str = 'système'
+    importe_par: str = 'système',
+    log_import: ImportCatalogue | None = None,
 ) -> ImportCatalogue:
     """
     Importe les articles depuis le fichier XLS Nirgescom.
@@ -165,30 +241,32 @@ def importer_articles(
     L'objet ImportCatalogue créé avec le bilan de l'opération
     """
     nom_fichier = Path(chemin_xls).name
-    log_import  = ImportCatalogue.objects.create(
-        nom_fichier=nom_fichier,
-        source='nirgescom',
-        statut='en_cours',
-        importe_par=importe_par
-    )
+    if log_import is None:
+        log_import = ImportCatalogue.objects.create(
+            nom_fichier=nom_fichier,
+            source='nirgescom',
+            statut='en_cours',
+            importe_par=importe_par,
+        )
+    else:
+        log_import.nom_fichier = log_import.nom_fichier or nom_fichier
+        log_import.source = 'nirgescom'
+        log_import.statut = 'en_cours'
+        log_import.importe_par = log_import.importe_par or importe_par
+        log_import.erreurs = ''
+        log_import.nb_articles_total = 0
+        log_import.nb_articles_crees = 0
+        log_import.nb_articles_mis_a_jour = 0
+        log_import.nb_articles_ignores = 0
+        log_import.save()
 
-    df = pd.read_excel(chemin_xls, engine='xlrd')
-
-    # Garder uniquement les colonnes utiles
-    colonnes_utiles = ['Code', ' Designation', 'Stock', 'Achat', 'Detail', 'Revient', 'image']
-    df = df[colonnes_utiles].copy()
-    df.columns = ['code', 'designation', 'stock', 'achat', 'detail', 'revient', 'image']
-
-    # Nettoyages de base
-    df['code']        = df['code'].astype(str).map(normaliser_ref_article)
-    df['designation'] = df['designation'].astype(str).str.strip()
-    df['image']       = df['image'].astype(str).str.strip().replace('nan', '')
+    df = charger_dataframe_catalogue(chemin_xls)
 
     # Filtrer les lignes sans code valide (headers, totaux, lignes vides)
     df = df[df['code'].str.match(r'^\d{4,}')]
     df = df[df['designation'].str.len() > 2]
     df = df[df['detail'].notna()]
-    df = df[df['detail'].astype(float) > 0]
+    df = df[df['detail'] > 0]
 
     nb_total     = len(df)
     nb_crees     = 0
@@ -225,9 +303,9 @@ def importer_articles(
                 image_nom_stocke = image_nom
 
             # Prix
-            prix_detail  = float(row['detail'])  if pd.notna(row['detail'])  else 0
-            prix_achat   = float(row['achat'])   if pd.notna(row['achat'])   else None
-            prix_revient = float(row['revient']) if pd.notna(row['revient']) else None
+            prix_detail = row['detail'] if pd.notna(row['detail']) else 0
+            prix_achat = row['achat'] if pd.notna(row['achat']) else None
+            prix_revient = row['revient'] if pd.notna(row['revient']) else None
 
             defaults = {
                 'designation':   row['designation'],
