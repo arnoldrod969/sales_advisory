@@ -733,7 +733,7 @@ class ImportCatalogueAdmin(admin.ModelAdmin):
     change_list_template = 'admin/conseil_vente/importcatalogue/change_list.html'
     list_display    = (
         'date_import', 'nom_fichier', 'source_badge',
-        'statut_badge', 'nb_articles_total',
+        'statut_badge', 'progression', 'nb_articles_total',
         'nb_articles_crees', 'nb_articles_mis_a_jour',
         'nb_articles_ignores', 'importe_par'
     )
@@ -765,6 +765,31 @@ class ImportCatalogueAdmin(admin.ModelAdmin):
         }
         return badge(obj.get_statut_display(), couleurs.get(obj.statut, 'gris'))
     statut_badge.short_description = 'Statut'
+
+    def progression(self, obj):
+        total = obj.nb_articles_total or 0
+        traites = obj.nb_articles_crees + obj.nb_articles_mis_a_jour + obj.nb_articles_ignores
+        pourcentage = min(100, int((traites / total) * 100)) if total else 0
+        couleur = '#417690' if obj.statut == 'en_cours' else '#28a745'
+        if obj.statut == 'erreur':
+            couleur = '#dc3545'
+        elif obj.statut == 'partiel':
+            couleur = '#f0ad4e'
+
+        return format_html(
+            '<div style="min-width:160px">'
+            '<div style="height:10px;background:#e9ecef;border-radius:999px;overflow:hidden;margin-bottom:4px">'
+            '<div style="width:{}%;height:100%;background:{}"></div>'
+            '</div>'
+            '<span style="font-size:11px;color:#495057">{} / {} ({}%)</span>'
+            '</div>',
+            pourcentage,
+            couleur,
+            traites,
+            total,
+            pourcentage,
+        )
+    progression.short_description = 'Progression'
 
     def detail_erreurs(self, obj):
         if not obj.erreurs:
@@ -895,4 +920,5 @@ class ImportCatalogueAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
         extra_context['import_url'] = reverse('admin:conseil_vente_import_catalogue')
+        extra_context['has_running_import'] = ImportCatalogue.objects.filter(statut='en_cours').exists()
         return super().changelist_view(request, extra_context=extra_context)

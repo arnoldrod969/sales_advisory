@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 COLONNES_SOURCE = ['Code', ' Designation', 'Stock', 'Achat', 'Detail', 'Revient', 'image']
 COLONNES_CIBLE = ['code', 'designation', 'stock', 'achat', 'detail', 'revient', 'image']
+FREQUENCE_MAJ_PROGRESS = 100
 
 
 # ─── Mapping familles provisoire ─────────────────────────────────────────────
@@ -277,11 +278,26 @@ def importer_articles(
     log_import.nb_articles_total = nb_total
     log_import.save(update_fields=['nb_articles_total'])
 
+    def sauvegarder_progression(force=False):
+        traites = nb_crees + nb_maj + nb_ignores
+        if not force and traites % FREQUENCE_MAJ_PROGRESS != 0:
+            return
+
+        log_import.nb_articles_crees = nb_crees
+        log_import.nb_articles_mis_a_jour = nb_maj
+        log_import.nb_articles_ignores = nb_ignores
+        log_import.save(update_fields=[
+            'nb_articles_crees',
+            'nb_articles_mis_a_jour',
+            'nb_articles_ignores',
+        ])
+
     for idx, row in df.iterrows():
         try:
             ref = normaliser_ref_article(row['code'])
             if not ref:
                 nb_ignores += 1
+                sauvegarder_progression()
                 continue
 
             # Trouver la sous-famille depuis le code
@@ -327,10 +343,13 @@ def importer_articles(
             else:
                 nb_maj += 1
 
+            sauvegarder_progression()
+
         except Exception as e:
             nb_ignores += 1
             lignes_erreur.append(f'Ligne {idx} ({row.get("code", "?")}): {e}')
             logger.warning(f'Erreur ligne {idx}: {e}')
+            sauvegarder_progression()
 
     # Bilan
     statut = 'succes'
@@ -339,6 +358,7 @@ def importer_articles(
     elif lignes_erreur:
         statut = 'partiel'
 
+    sauvegarder_progression(force=True)
     log_import.statut                 = statut
     log_import.nb_articles_crees      = nb_crees
     log_import.nb_articles_mis_a_jour = nb_maj
